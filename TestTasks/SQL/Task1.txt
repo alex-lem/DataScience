@@ -1,0 +1,49 @@
+Есть таблица событий, в которой собирается вся активность пользователя в продукте. Колонки:
+
+-user_id
+-event_timestamp
+-event_name
+
+Напишите запрос, который вернёт таблицу вида (по ссылке):
+https://drive.google.com/file/d/1sx8MaX6oFYirTXaN5-yq9IkozvuYv8K3/view?usp=sharing
+
+Решение:
+
+Этот вариант выводит пользователей, удовлетворяющих условию возврата на второй месяц после регистрации 
+(в event_name: "registration" -  регистрация в системе (возможна один раз), "log in" - вход в систему (возможно неограниченное количество):
+
+WITH reg AS 
+(select user_id, 
+test.event_timestamp AS DATA_REG, 
+event_name,
+COUNT (user_id) OVER (PARTITION BY STRFTIME('%Y-%m', event_timestamp), event_name) as registration_in_month
+FROM test
+WHERE event_name = 'registration'),
+
+log_in AS 
+(select user_id, 
+MIN(event_timestamp) AS DATA_LOG, 
+event_name,
+COUNT (user_id) OVER (PARTITION BY STRFTIME('%Y-%m', event_timestamp), event_name) as logins_in_month
+FROM test
+WHERE event_name = 'log in'
+GROUP BY user_id),
+
+users_return AS
+(select reg.user_id,  
+COUNT (reg.user_id) OVER (PARTITION BY STRFTIME('%Y-%m', reg.DATA_REG)) as users_return_next_month
+FROM reg,log_in
+WHERE reg.user_id = log_in.user_id AND STRFTIME('%m', log_in.DATA_LOG) - STRFTIME('%m', reg.DATA_REG) = 1)
+
+select reg.user_id,
+STRFTIME('%Y-%m',reg.DATA_REG) AS 'Год и месяц появления пользователя в системе', 
+reg.registration_in_month AS 'Количество новых пользователей (пришедших в этом месяце)',
+users_return.users_return_next_month AS 'Количество пользователей, вернувшихся на второй месяц',
+ROUND(CAST((users_return.users_return_next_month) AS REAL)/CAST((reg.registration_in_month) AS REAL)*100 ,1) AS 'Вероятность возврата'
+FROM reg, users_return
+WHERE reg.user_id = users_return.user_id
+
+Если нужно было сгруппировать по месяцем то в конце добавить:
+GROUP BY STRFTIME('%Y-%m', reg.DATA_REG)
+
+Диалект - sqlite
