@@ -1,5 +1,5 @@
 В этой папке отражены аналитические дашборды и мои примеры обработки данных.
 
-Пример дашборда в Tableau на основе таблицы оценки заемщиков:
+Пример дашборда в Tableau на основе данных взаимодействий карточек пользователей Яндекс.Дзен:
 
-https://public.tableau.com/profile/alex.lem6794#!/vizhome/BorrowersAnalysis/Dashboard1?publish=yes
+https://public.tableau.com/profile/alex.lem6794#!/vizhome/__16189133249990/sheet0
